@@ -185,11 +185,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0
     <button type="button" class="btn alt" id="printBtn" style="padding:11px 24px;font-size:15px;width:auto">Print / Save a copy</button>
     <a class="btn" style="padding:11px 24px;font-size:15px;text-decoration:none;width:auto" id="waBtn" href="https://wa.me/919725634112" target="_blank" rel="noopener">Message us on WhatsApp</a>
    </div>
+   <div class="noprint" style="margin-top:16px;max-width:560px;margin-left:auto;margin-right:auto;text-align:left">
+    <label class="l" for="waText" style="text-align:center">If WhatsApp opens with an empty message, copy this and paste it into the chat:</label>
+    <textarea id="waText" readonly rows="7" style="min-height:140px;background:#f7fafc"></textarea>
+    <div style="text-align:center;margin-top:8px"><button type="button" class="btn alt" id="copyBtn" style="padding:9px 22px;font-size:14px;width:auto">Copy message</button> <span id="copyMsg" style="font-size:13px;color:var(--green);margin-left:8px"></span></div>
+   </div>
   </div>
   <div class="sum" id="summary"></div>
  </section>
 </main>
-<footer class="foot">UdhariCrop &nbsp;|&nbsp; Surat, Gujarat &nbsp;|&nbsp; WhatsApp / Call +91 97256 34112</footer>
+<footer class="foot">UdhariCrop &nbsp;|&nbsp; Surat, Gujarat &nbsp;|&nbsp; WhatsApp / Call +91 97256 34112 &nbsp;|&nbsp; Form v2.1</footer>
 
 <script>
 const GOOGLE_SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby-EWffVNOctAQTq5w5i27eb0axqJcKFM83JZIcB8Hx7sk_xccE-6SKLVVZx7eeuJk/exec";
@@ -266,7 +271,8 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function showSuccess(data){
  document.getElementById('refNo').textContent=data.reference_no;
  const msg=['Hello UdhariCrop, I have just submitted the onboarding form.','','Reference No: '+data.reference_no,'Firm: '+(data.firm_name||''),'Owner: '+(data.owner_name||''),'Contact: '+(data.contact_number||''),'','Please confirm receipt and let me know the next steps. I will share my customer list (Name, Number, Amount, Due Date) here.'].join('\n');
- document.getElementById('waBtn').href='https://wa.me/'+FALLBACK_WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
+ document.getElementById('waBtn').href='https://api.whatsapp.com/send?phone='+FALLBACK_WHATSAPP_NUMBER+'&text='+encodeURIComponent(msg);
+ document.getElementById('waText').value=msg;
  let h='<h3 style="margin-top:16px">Submitted details</h3><div style="font-size:12.5px;color:var(--mut);margin-bottom:4px">Submitted on '+esc(new Date(data.submitted_at).toLocaleString())+'</div>';
  LABELS.forEach(([title,rows])=>{
   const items=rows.filter(([k])=>data[k]).map(([k,l])=>'<dt>'+esc(l)+'</dt><dd>'+esc(data[k]).replace(/\n/g,'<br>')+'</dd>').join('');
@@ -279,6 +285,11 @@ function showSuccess(data){
  window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('printBtn').addEventListener('click',()=>window.print());
+document.getElementById('copyBtn').addEventListener('click',async()=>{
+ const ta=document.getElementById('waText'),m=document.getElementById('copyMsg');
+ try{await navigator.clipboard.writeText(ta.value);m.textContent='Copied. Now paste it in WhatsApp.';}
+ catch(e){ta.focus();ta.select();try{document.execCommand('copy');m.textContent='Copied. Now paste it in WhatsApp.';}catch(_){m.textContent='Select the text and copy it manually.';}}
+});
 
 form.addEventListener('submit',async e=>{
  e.preventDefault();
